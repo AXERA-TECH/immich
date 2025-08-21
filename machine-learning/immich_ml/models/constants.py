@@ -29,6 +29,7 @@ _OPENCLIP_MODELS = {
     "ViT-H-14-quickgelu__dfn5b",
     "ViT-H-14__laion2b-s32b-b79k",
     "ViT-L-14-336__openai",
+    "ViT-L-14-336__axera",
     "ViT-L-14-quickgelu__dfn2b",
     "ViT-L-14__laion2b-s32b-b82k",
     "ViT-L-14__laion400m_e31",

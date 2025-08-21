@@ -44,6 +44,7 @@ class ModelFormat(StrEnum):
     ARMNN = "armnn"
     ONNX = "onnx"
     RKNN = "rknn"
+    AXERA = "axmodel"
 
 
 class ModelSource(StrEnum):
