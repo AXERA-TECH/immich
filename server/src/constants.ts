@@ -96,6 +96,7 @@ export const CLIP_MODEL_INFO: Record<string, ModelInfo> = {
   'ViT-L-14__laion400m_e31': { dimSize: 768 },
   'ViT-L-14__laion400m_e32': { dimSize: 768 },
   'ViT-L-14__openai': { dimSize: 768 },
+  'ViT-L-14-336__axera': { dimSize: 768 },
   'XLM-Roberta-Large-Vit-L-14': { dimSize: 768 },
   'nllb-clip-base-siglip__mrl': { dimSize: 768 },
   'nllb-clip-base-siglip__v1': { dimSize: 768 },
