@@ -24,6 +24,7 @@ sudo apt install libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-d
 ## 运行 docker
 进入 docker 目录
 ```
+cp env.example .env
 docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
 ```
 没什么意外这时候应该跑起来了，并且替换了server镜像，然后访问 http://localhost:2283 就可以看到登录页面了
@@ -35,7 +36,7 @@ docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
 
 ```
 cd ~/.cache/immich_ml/clip
-wget xxx/ViT-L-14-336__axera.zip
+wget https://github.com/ZHEQIUSHUI/immich/releases/download/v0.1/ViT-L-14-336__axera.zip
 unzip ViT-L-14-336__axera.zip
 ```
 解压到目录结构应该是这样
@@ -59,6 +60,7 @@ unzip ViT-L-14-336__axera.zip
 ## 启动 http 服务
 ```shell
 cd machine-learning
+pip install -r requirements.txt
 python -m immich_ml
 ```
 打印以下日志，就表示对了
