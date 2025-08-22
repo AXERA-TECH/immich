@@ -13,3 +13,5 @@ opencv-python
 insightface
 aiocache
 python-multipart
+cffi
+ml_dtypes
