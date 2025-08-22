@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  immich-server:
+    image: ax-immich-server:latest
+    build:
+      context: ../server
+    restart: unless-stopped
+
+  # immich-machine-learning:
+  #   image: ax-immich-ml:latest
+  #   build:
+  #     context: ../machine-learning
+  #   restart: unless-stopped
+  immich-machine-learning:
+    deploy:
+      replicas: 0
