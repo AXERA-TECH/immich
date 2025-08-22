@@ -1,0 +1,15 @@
+gunicorn
+pydantic
+pydantic_settings
+rich
+uvicorn
+orjson
+fastapi
+onnxruntime
+pillow
+huggingface_hub
+tokenizers
+opencv-python
+insightface
+aiocache
+python-multipart
