@@ -24,7 +24,7 @@ sudo apt install libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-d
 ## 运行 docker
 进入 docker 目录
 ```
-cp env.example .env
+cp example.env .env
 docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
 ```
 没什么意外这时候应该跑起来了，并且替换了server镜像，然后访问 http://localhost:2283 就可以看到登录页面了
