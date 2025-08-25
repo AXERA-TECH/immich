@@ -74,6 +74,12 @@ class InferenceModel(ABC):
         }
         if 'axera' in self.model_name:
             self.model_format = ModelFormat.AXERA
+            snapshot_download(
+                f"AXERA-TECH/{clean_name(self.model_name)}",
+                cache_dir=self.cache_dir,
+                local_dir=self.cache_dir,
+                ignore_patterns=ignored_patterns.get(self.model_format, []),
+            )
         else:
             snapshot_download(
                 f"immich-app/{clean_name(self.model_name)}",
