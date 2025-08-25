@@ -14,6 +14,7 @@ from immich_ml.models.constants import WEBLATE_TO_FLORES200
 from immich_ml.models.transforms import clean_text, serialize_np_array
 from immich_ml.schemas import ModelSession, ModelTask, ModelType
 
+from .CNTokenizer import tokenize as cn_tokenize
 
 class BaseCLIPTextualEncoder(InferenceModel):
     depends = []
@@ -96,18 +97,22 @@ class OpenClipTextualEncoder(BaseCLIPTextualEncoder):
         return tokenizer
 
     def tokenize(self, text: str, language: str | None = None) -> dict[str, NDArray[np.int32]]:
-        text = clean_text(text, canonicalize=self.canonicalize)
-        if self.is_nllb and language is not None:
-            flores_code = WEBLATE_TO_FLORES200.get(language)
-            if flores_code is None:
-                no_country = language.split("-")[0]
-                flores_code = WEBLATE_TO_FLORES200.get(no_country)
+        if 'CN' in self.model_name and 'axera' in self.model_name:
+            tokens = cn_tokenize(text)
+            return {"text": np.array(tokens, dtype=np.int32)}
+        else:
+            text = clean_text(text, canonicalize=self.canonicalize)
+            if self.is_nllb and language is not None:
+                flores_code = WEBLATE_TO_FLORES200.get(language)
                 if flores_code is None:
-                    log.warning(f"Language '{language}' not found, defaulting to 'en'")
-                    flores_code = "eng_Latn"
-            text = f"{flores_code}{text}"
-        tokens: Encoding = self.tokenizer.encode(text)
-        return {"text": np.array([tokens.ids], dtype=np.int32)}
+                    no_country = language.split("-")[0]
+                    flores_code = WEBLATE_TO_FLORES200.get(no_country)
+                    if flores_code is None:
+                        log.warning(f"Language '{language}' not found, defaulting to 'en'")
+                        flores_code = "eng_Latn"
+                text = f"{flores_code}{text}"
+            tokens: Encoding = self.tokenizer.encode(text)
+            return {"text": np.array([tokens.ids], dtype=np.int32)}
 
 
 class MClipTextualEncoder(OpenClipTextualEncoder):

@@ -92,7 +92,7 @@ const updatedConfig = Object.freeze<SystemConfig>({
     },
     clip: {
       enabled: true,
-      modelName: 'ViT-L-14-336__axera',
+      modelName: 'ViT-L-14-336-CN__axera',
     },
     duplicateDetection: {
       enabled: true,
