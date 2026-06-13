@@ -131,13 +131,16 @@ class AXEngineSession(Session):
         self._context = engine_cffi.new("uint64_t **")
         self._io = engine_cffi.new("AX_ENGINE_IO_T *")
 
-        # model buffer, almost copied from onnx runtime
+        import mmap
+
         if isinstance(path_or_bytes, (str, os.PathLike)):
             self._model_name = os.path.splitext(os.path.basename(path_or_bytes))[0]
             with open(path_or_bytes, "rb") as f:
-                data = f.read()
-            self._model_buffer = engine_cffi.new("char[]", data)
-            self._model_buffer_size = len(data)
+                # Use memory mapping without actually loading into memory
+                mmapped_file = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+                self._model_buffer = engine_cffi.from_buffer("char[]", mmapped_file)
+                self._model_buffer_size = len(mmapped_file)
+                self._mmapped_file = mmapped_file  # keep
         elif isinstance(path_or_bytes, bytes):
             self._model_buffer = engine_cffi.new("char[]", path_or_bytes)
             self._model_buffer_size = len(path_or_bytes)
@@ -392,8 +395,10 @@ class AXEngineSession(Session):
 
         # flush output
         outputs = []
+        origin_output_names = [_o.name for _o in self.get_outputs(shape_group)]
+        outputs_ranks = [output_names.index(_on) for _on in origin_output_names]
         if 0 == ret:
-            for i in range(len(self.get_outputs(shape_group))):
+            for i in outputs_ranks:
                 sys_lib.AX_SYS_MinvalidateCache(
                     self._io[0].pOutputs[i].phyAddr,
                     self._io[0].pOutputs[i].pVirAddr,
@@ -405,7 +410,7 @@ class AXEngineSession(Session):
                         self._io[0].pOutputs[i].pVirAddr, npy_size
                     ),
                     dtype=self.get_outputs(shape_group)[i].dtype,
-                ).reshape(self.get_outputs(shape_group)[i].shape)
+                ).reshape(self.get_outputs(shape_group)[i].shape).copy()
                 name = self.get_outputs(shape_group)[i].name
                 if name in output_names:
                     outputs.append(npy)
