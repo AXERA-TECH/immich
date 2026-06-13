@@ -115,7 +115,4 @@ class InferenceSession:
             run_options=None,
             shape_group: int = 0
     ) -> list[np.ndarray]:
-        if len(input_feed) == 1 and len(self.get_inputs(shape_group)) == 1:
-            input = input_feed[list(input_feed.keys())[0]]
-            input_feed = {self.get_inputs(shape_group)[0].name: input}
         return self._sess.run(output_names, input_feed, run_options, shape_group)
