@@ -6,6 +6,7 @@
 #
 
 import os
+from threading import RLock
 from typing import Any, Sequence
 
 import numpy as np
@@ -14,6 +15,9 @@ from ._base_session import SessionOptions
 from ._node import NodeArg
 from ._providers import axclrt_provider_name, axengine_provider_name
 from ._providers import get_available_providers
+
+
+_run_lock = RLock()
 
 
 class InferenceSession:
@@ -115,4 +119,5 @@ class InferenceSession:
             run_options=None,
             shape_group: int = 0
     ) -> list[np.ndarray]:
-        return self._sess.run(output_names, input_feed, run_options, shape_group)
+        with _run_lock:
+            return self._sess.run(output_names, input_feed, run_options, shape_group)

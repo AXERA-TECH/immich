@@ -1,8 +1,13 @@
 from typing import Any
 
+from immich_ml.models.axera import AXERA_SUFFIX
 from immich_ml.models.base import InferenceModel
 from immich_ml.models.clip.textual import MClipTextualEncoder, OpenClipTextualEncoder
 from immich_ml.models.clip.visual import OpenClipVisualEncoder
+from immich_ml.models.facial_recognition.axera_detection import AxeraFaceDetector
+from immich_ml.models.facial_recognition.axera_recognition import AxeraFaceRecognizer
+from immich_ml.models.ocr.axera_detection import AxeraTextDetector
+from immich_ml.models.ocr.axera_recognition import AxeraTextRecognizer
 from immich_ml.models.ocr.detection import TextDetector
 from immich_ml.models.ocr.recognition import TextRecognizer
 from immich_ml.schemas import ModelSource, ModelTask, ModelType
@@ -24,11 +29,27 @@ def get_model_class(model_name: str, model_type: ModelType, model_task: ModelTas
         case ModelSource.MCLIP, ModelType.TEXTUAL, ModelTask.SEARCH:
             return MClipTextualEncoder
 
+        case ModelSource.INSIGHTFACE, ModelType.DETECTION, ModelTask.FACIAL_RECOGNITION if model_name.endswith(
+            AXERA_SUFFIX
+        ):
+            return AxeraFaceDetector
+
+        case ModelSource.INSIGHTFACE, ModelType.RECOGNITION, ModelTask.FACIAL_RECOGNITION if model_name.endswith(
+            AXERA_SUFFIX
+        ):
+            return AxeraFaceRecognizer
+
         case ModelSource.INSIGHTFACE, ModelType.DETECTION, ModelTask.FACIAL_RECOGNITION:
             return FaceDetector
 
         case ModelSource.INSIGHTFACE, ModelType.RECOGNITION, ModelTask.FACIAL_RECOGNITION:
             return FaceRecognizer
+
+        case ModelSource.PADDLE, ModelType.DETECTION, ModelTask.OCR if model_name.endswith(AXERA_SUFFIX):
+            return AxeraTextDetector
+
+        case ModelSource.PADDLE, ModelType.RECOGNITION, ModelTask.OCR if model_name.endswith(AXERA_SUFFIX):
+            return AxeraTextRecognizer
 
         case ModelSource.PADDLE, ModelType.DETECTION, ModelTask.OCR:
             return TextDetector

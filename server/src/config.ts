@@ -304,14 +304,14 @@ export const defaults = Object.freeze<SystemConfig>({
     },
     facialRecognition: {
       enabled: true,
-      modelName: 'buffalo_l',
+      modelName: 'buffalo_l__axera',
       minScore: 0.7,
       maxDistance: 0.5,
       minFaces: 3,
     },
     ocr: {
       enabled: true,
-      modelName: 'PP-OCRv5_mobile',
+      modelName: 'PPOCR_v5__axera',
       minDetectionScore: 0.5,
       minRecognitionScore: 0.8,
       maxResolution: 736,

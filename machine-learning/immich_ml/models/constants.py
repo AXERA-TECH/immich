@@ -74,6 +74,7 @@ _INSIGHTFACE_MODELS = {
     "buffalo_s",
     "buffalo_m",
     "buffalo_l",
+    "buffalo_l__axera",
 }
 
 
@@ -87,6 +88,7 @@ _PADDLE_MODELS = {
     "ESLAV__PP-OCRv5_mobile",
     "KOREAN__PP-OCRv5_mobile",
     "LATIN__PP-OCRv5_mobile",
+    "PPOCR_v5__axera",
     "TH__PP-OCRv5_mobile",
 }
 

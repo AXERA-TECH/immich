@@ -196,6 +196,7 @@
             name="facial-recognition-model"
             bind:value={configToEdit.machineLearning.facialRecognition.modelName}
             options={[
+              { value: 'buffalo_l__axera', text: 'buffalo_l__axera (AXERA)' },
               { value: 'antelopev2', text: 'antelopev2' },
               { value: 'buffalo_l', text: 'buffalo_l' },
               { value: 'buffalo_m', text: 'buffalo_m' },
@@ -275,6 +276,7 @@
             name="ocr-model"
             bind:value={configToEdit.machineLearning.ocr.modelName}
             options={[
+              { text: 'PPOCR_v5__axera (AXERA)', value: 'PPOCR_v5__axera' },
               { text: 'PP-OCRv5_server (Chinese, Japanese and English)', value: 'PP-OCRv5_server' },
               { text: 'PP-OCRv5_mobile (Chinese, Japanese and English)', value: 'PP-OCRv5_mobile' },
               { text: 'PP-OCRv5_mobile (English-only)', value: 'EN__PP-OCRv5_mobile' },
