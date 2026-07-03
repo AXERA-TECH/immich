@@ -1,0 +1,14 @@
+services:
+  immich-machine-learning:
+    # Use with docker-compose.ml.yml only.
+    # Optional extra AXCL mapping for aarch64 deployments.
+    # The base SoC runtime libraries are mapped by docker-compose.ml.yml.
+    # Do not include this file unless the host AXCL library path exists.
+    # If your board exposes a device node, uncomment devices below and verify the path first.
+    volumes:
+      - ${AXERA_LIB_PATH:-/usr/lib/axcl}:/usr/lib/axcl:ro
+    environment:
+      LD_LIBRARY_PATH: /usr/lib/axcl:${LD_LIBRARY_PATH:-}
+    # Docker fails to start the container when a configured device path is missing.
+    # devices:
+    #   - ${AXERA_DEVICE_PATH:-/dev/ax0}:${AXERA_DEVICE_PATH:-/dev/ax0}

@@ -1,0 +1,145 @@
+name: AXERA Bundle
+
+# Bundle policy:
+# - include only AXERA custom server/ML image archives plus minimal deploy files
+# - do not include model cache or pre-downloaded model assets
+# - do not include postgres/valkey image archives; those are pulled during deployment
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'axera-v*'
+
+permissions:
+  contents: read
+
+env:
+  AXENGINE_WHEEL_URL: https://github.com/AXERA-TECH/pyaxengine/releases/download/0.1.3.rc3/axengine-0.1.3-py3-none-any.whl
+
+jobs:
+  build-models:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set bundle version
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            echo "BUNDLE_VERSION=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+          else
+            echo "BUNDLE_VERSION=manual-$(date +%Y%m%d)" >> "$GITHUB_ENV"
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Build AXERA model package
+        run: |
+          python -m pip install --upgrade pip huggingface_hub
+          mkdir -p out/models
+          python scripts/axera/package-models.py \
+            --output out/models \
+            --version "${BUNDLE_VERSION}"
+
+      - name: Upload AXERA model package
+        uses: actions/upload-artifact@v4
+        with:
+          name: immich-axera-models
+          path: out/models/immich-axera-models-${{ env.BUNDLE_VERSION }}.tar.gz
+          if-no-files-found: error
+
+  build-bundle:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform_name: aarch64
+            docker_platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            deploy_dir: deployment/axera/aarch64
+            server_archive: ax-immich-server-aarch64.tar
+            ml_archive: ax-immich-ml-aarch64.tar
+          - platform_name: x86
+            docker_platform: linux/amd64
+            runner: ubuntu-24.04
+            deploy_dir: deployment/axera/x86
+            server_archive: ax-immich-server-x86.tar
+            ml_archive: ax-immich-ml-x86.tar
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set bundle version
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            echo "BUNDLE_VERSION=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+          else
+            echo "BUNDLE_VERSION=manual-$(date +%Y%m%d)" >> "$GITHUB_ENV"
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Build ML wheel
+        run: |
+          python -m pip install --upgrade pip build hatchling
+          python -m build --wheel --no-isolation machine-learning
+
+      - name: Prepare output directories
+        run: |
+          rm -rf out
+          mkdir -p out/images out/packages out/bundles
+          cp machine-learning/requirements.txt out/packages/
+          cp machine-learning/dist/*.whl out/packages/
+          curl -fL "${AXENGINE_WHEEL_URL}" -o out/packages/axengine-0.1.3-py3-none-any.whl
+
+      - name: Build server image archive
+        run: |
+          docker buildx build \
+            --platform "${{ matrix.docker_platform }}" \
+            --file server/Dockerfile \
+            --build-arg "GITHUB_TOKEN=${{ github.token }}" \
+            --tag "ax-immich-server:latest" \
+            --output "type=docker,dest=out/images/${{ matrix.server_archive }}" \
+            .
+          gzip -f "out/images/${{ matrix.server_archive }}"
+
+      - name: Build AXERA ML image archive
+        run: |
+          docker buildx build \
+            --platform "${{ matrix.docker_platform }}" \
+            --file machine-learning/Dockerfile \
+            --build-arg "DEVICE=cpu" \
+            --build-arg "AXENGINE_WHEEL_URL=${AXENGINE_WHEEL_URL}" \
+            --tag "ax-immich-ml:latest" \
+            --output "type=docker,dest=out/images/${{ matrix.ml_archive }}" \
+            machine-learning
+          gzip -f "out/images/${{ matrix.ml_archive }}"
+
+      - name: Create platform bundle
+        run: |
+          bash scripts/axera/package-bundle.sh \
+            "${{ matrix.platform_name }}" \
+            "${BUNDLE_VERSION}" \
+            "${{ matrix.deploy_dir }}" \
+            docker/example.env \
+            out/images \
+            out/packages \
+            out/bundles
+
+      - name: Upload platform bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: immich-axera-${{ matrix.platform_name }}
+          path: out/bundles/immich-axera-${{ matrix.platform_name }}-${{ env.BUNDLE_VERSION }}.tar.gz
+          if-no-files-found: error

@@ -1,0 +1,15 @@
+services:
+  immich-machine-learning:
+    # Use with docker-compose.ml.yml only.
+    # Optional AXCL mapping for x86 deployments.
+    # docker-compose.ml.yml runs ldconfig before starting ML.
+    # Include this file only when the host has AXCL Host Driver installed.
+    # Verify every host path below before enabling it; Docker fails to start
+    # the container when a configured device path is missing.
+    volumes:
+      - ${AXCL_LIB_PATH:-/volume1/@appstore/axclhost/lib}:/opt/axcl/lib:ro
+    devices:
+      - ${AXCL_DEVICE_AXCL_HOST:-/dev/axcl_host}:/dev/axcl_host
+      - ${AXCL_DEVICE_AX_MMB:-/dev/ax_mmb_dev}:/dev/ax_mmb_dev
+      - ${AXCL_DEVICE_MSG_USERDEV:-/dev/msg_userdev}:/dev/msg_userdev
+      - ${AXCL_DEVICE_P2P:-/dev/p2p}:/dev/p2p

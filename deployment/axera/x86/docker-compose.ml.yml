@@ -1,0 +1,43 @@
+services:
+  immich-machine-learning:
+    # Optional Docker-based ML service.
+    # Do not include this file if you run ML locally, for example from a Python venv.
+    container_name: immich_machine_learning
+    image: ax-immich-ml:${IMMICH_VERSION:-latest}
+    pull_policy: never
+    env_file:
+      - .env
+    environment:
+      MACHINE_LEARNING_CACHE_FOLDER: /cache
+      HF_HOME: /cache/huggingface
+      IMMICH_HOST: 0.0.0.0
+      IMMICH_PORT: 3003
+      AXERA_CHIP: ${AXERA_CHIP:-AX650}
+      MACHINE_LEARNING_REQUEST_THREADS: ${MACHINE_LEARNING_REQUEST_THREADS:-1}
+      HF_HUB_OFFLINE: ${HF_HUB_OFFLINE:-1}
+      LD_LIBRARY_PATH: /opt/axcl/lib:${LD_LIBRARY_PATH:-}
+      http_proxy: ${http_proxy:-}
+      https_proxy: ${https_proxy:-}
+      HTTP_PROXY: ${HTTP_PROXY:-}
+      HTTPS_PROXY: ${HTTPS_PROXY:-}
+      no_proxy: localhost,127.0.0.1,0.0.0.0,immich-machine-learning,immich_server,immich_postgres,immich_redis
+      NO_PROXY: localhost,127.0.0.1,0.0.0.0,immich-machine-learning,immich_server,immich_postgres,immich_redis
+    ports:
+      - '${MACHINE_LEARNING_PORT:-3003}:3003'
+    volumes:
+      - ${MACHINE_LEARNING_MODEL_PATH:-../models}:/cache
+      - ${HF_HOME_PATH:-../huggingface}:/cache/huggingface
+    command:
+      - /bin/sh
+      - -c
+      - |
+        if command -v ldconfig >/dev/null 2>&1; then
+          if [ -d /opt/axcl/lib ]; then
+            grep -qxF /opt/axcl/lib /etc/ld.so.conf || echo /opt/axcl/lib >> /etc/ld.so.conf
+          fi
+          ldconfig
+        fi
+        exec python -m immich_ml
+    restart: always
+    healthcheck:
+      disable: false

@@ -1,0 +1,62 @@
+services:
+  immich-machine-learning:
+    # Optional Docker-based ML service.
+    # Do not include this file if you run ML locally, for example from a Python venv.
+    container_name: immich_machine_learning
+    image: ax-immich-ml:${IMMICH_VERSION:-latest}
+    pull_policy: never
+    env_file:
+      - .env
+    environment:
+      MACHINE_LEARNING_CACHE_FOLDER: /cache
+      HF_HOME: /cache/huggingface
+      IMMICH_HOST: 0.0.0.0
+      IMMICH_PORT: 3003
+      AXERA_CHIP: ${AXERA_CHIP:-AX650}
+      MACHINE_LEARNING_REQUEST_THREADS: ${MACHINE_LEARNING_REQUEST_THREADS:-1}
+      HF_HUB_OFFLINE: ${HF_HUB_OFFLINE:-1}
+      LD_LIBRARY_PATH: /opt/lib:/soc/lib:${LD_LIBRARY_PATH:-}
+    ports:
+      - '${MACHINE_LEARNING_PORT:-3003}:3003'
+    volumes:
+      - ${MACHINE_LEARNING_MODEL_PATH:-../models}:/cache
+      - ${HF_HOME_PATH:-../huggingface}:/cache/huggingface
+      # Required by the aarch64 SoC runtime. Verify these host paths if your BSP uses different locations.
+      - ${AXERA_OPT_LIB_PATH:-/opt/lib}:/opt/lib:ro
+      - ${AXERA_SOC_LIB_PATH:-/soc/lib}:/soc/lib:ro
+    command:
+      - /bin/sh
+      - -c
+      - |
+        if command -v ldconfig >/dev/null 2>&1; then
+          grep -qxF /opt/lib /etc/ld.so.conf || echo /opt/lib >> /etc/ld.so.conf
+          grep -qxF /soc/lib /etc/ld.so.conf || echo /soc/lib >> /etc/ld.so.conf
+          ldconfig
+        fi
+        exec python -m immich_ml
+    restart: always
+    healthcheck:
+      disable: false
+    # AX650 SoC NPU runtime needs these AX_SYS/AX_ENGINE device nodes.
+    # Keep this list explicit instead of using privileged mode.
+    devices:
+      - /dev/ax_sys:/dev/ax_sys
+      - /dev/ax_sysmap:/dev/ax_sysmap
+      - /dev/ax_base:/dev/ax_base
+      - /dev/ax_cmm:/dev/ax_cmm
+      - /dev/ax_pool:/dev/ax_pool
+      - /dev/ax_hrtimer:/dev/ax_hrtimer
+      - /dev/ax_os_mem:/dev/ax_os_mem
+      - /dev/ax_mmb_dev:/dev/ax_mmb_dev
+      - /dev/ax_proton:/dev/ax_proton
+      - /dev/ax_vdsp0:/dev/ax_vdsp0
+      - /dev/ax_vdsp1:/dev/ax_vdsp1
+      - /dev/npu:/dev/npu
+      - /dev/mem:/dev/mem
+    cap_add:
+      # AX_SYS uses raw I/O and memory device access during SoC runtime setup.
+      - SYS_RAWIO
+      - SYS_ADMIN
+      - IPC_LOCK
+      # AX_ENGINE_Init creates NPU runtime threads with elevated scheduling policy.
+      - SYS_NICE
