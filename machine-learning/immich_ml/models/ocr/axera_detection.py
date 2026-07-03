@@ -22,6 +22,10 @@ class AxeraTextDetector(InferenceModel):
     def _download(self) -> None:
         self.axera_model.download()
 
+    @property
+    def cached(self) -> bool:
+        return self.axera_model.is_model_dir_complete(self.axera_model.model_dir)
+
     def _load(self) -> ModelSession:
         return self._make_session(self.axera_model.det_model_path)
 

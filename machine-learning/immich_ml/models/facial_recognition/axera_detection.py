@@ -20,6 +20,10 @@ class AxeraFaceDetector(InferenceModel):
     def _download(self) -> None:
         self.axera_model.download()
 
+    @property
+    def cached(self) -> bool:
+        return self.axera_model.is_model_pack_complete()
+
     def _load(self) -> ModelSession:
         session = self._make_session(self.axera_model.det_model_path)
         self.model = self.axera_model.make_detector(session, self.min_score)
