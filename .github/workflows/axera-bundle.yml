@@ -27,9 +27,9 @@ jobs:
       - name: Set bundle version
         run: |
           if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            echo "BUNDLE_VERSION=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+            echo "BUNDLE_VERSION=${GITHUB_REF_NAME#axera-}" >> "$GITHUB_ENV"
           else
-            echo "BUNDLE_VERSION=manual-$(date +%Y%m%d)" >> "$GITHUB_ENV"
+            echo "BUNDLE_VERSION=dev" >> "$GITHUB_ENV"
           fi
 
       - name: Set up Python
@@ -49,7 +49,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: immich-axera-models
-          path: out/models/immich-axera-models-${{ env.BUNDLE_VERSION }}.tar.gz
+          path: out/models/*.tar.gz
           if-no-files-found: error
 
   build-bundle:
@@ -77,9 +77,9 @@ jobs:
       - name: Set bundle version
         run: |
           if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            echo "BUNDLE_VERSION=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+            echo "BUNDLE_VERSION=${GITHUB_REF_NAME#axera-}" >> "$GITHUB_ENV"
           else
-            echo "BUNDLE_VERSION=manual-$(date +%Y%m%d)" >> "$GITHUB_ENV"
+            echo "BUNDLE_VERSION=dev" >> "$GITHUB_ENV"
           fi
 
       - name: Set up Docker Buildx
@@ -141,5 +141,50 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: immich-axera-${{ matrix.platform_name }}
-          path: out/bundles/immich-axera-${{ matrix.platform_name }}-${{ env.BUNDLE_VERSION }}.tar.gz
+          path: out/bundles/*.tar.gz
           if-no-files-found: error
+
+  publish-release:
+    name: Publish tag release
+    needs:
+      - build-models
+      - build-bundle
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    if: ${{ github.ref_type == 'tag' }}
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Collect release assets
+        run: |
+          set -euxo pipefail
+          mkdir -p dist
+          find artifacts -type f -name '*.tar.gz' -exec cp -a {} dist/ \;
+          test -n "$(find dist -maxdepth 1 -type f -name '*.tar.gz' -print -quit)"
+          ls -lh dist
+
+      - name: Generate release notes
+        run: |
+          cat > release_body.md <<'EOF'
+          AXERA Immich 发布包。
+
+          Assets：
+
+          - `immich-axera-aarch64-*.tar.gz`：AX650/aarch64 部署包。
+          - `immich-axera-x86-*.tar.gz`：x86 部署包。
+          - `immich-axera-models-*.tar.gz`：可选离线模型包。
+          EOF
+
+      - name: Publish release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          make_latest: false
+          overwrite_files: true
+          body_path: release_body.md
+          files: dist/*.tar.gz
