@@ -84,13 +84,15 @@ immich
 |   |-- docker-compose.axcl.yml
 |   |-- docker-compose.ml.yml
 |   |-- docker-compose.yml
-|   |-- example.env
+|   |-- .env
 |   |-- library
 |   `-- postgres
 |-- huggingface
 |-- images
 |   |-- ax-immich-ml-aarch64.tar.gz
-|   `-- ax-immich-server-aarch64.tar.gz
+|   |-- ax-immich-server-aarch64.tar.gz
+|   |-- immich-postgres-aarch64.tar.gz
+|   `-- valkey-8-bookworm-aarch64.tar.gz
 |-- models
 `-- packages
     |-- axengine-0.1.3-py3-none-any.whl
@@ -100,34 +102,32 @@ immich
 
 ## 2.启动server服务
 
-### （1）创建env文件（必做）
+### （1）检查env文件（必做）
 
-- 创建 `.env` 环境变量文件。
+- 发布包默认包含 `deploy/.env`。首次启动前请检查路径、数据库密码等配置是否符合当前设备。
 
 ```bash
-cp deploy/example.env deploy/.env
+vi deploy/.env
 ```
 
 ### （2）Docker 环境配置（可选）
 
-- **修改数据目录**：若内部空间不够，可修改 Docker 镜像路径至 SD Card。创建 `/mnt/sdcard/docker_data` 目录后，修改 `/lib/systemd/system/docker.service`，在 `ExecStart` 后面添加 `-data-root=/mnt/sdcard/docker_data` 并重启服务。请务必确保 SD Card 已配置开机自动挂载。
-- **设置 Docker 代理**：若由于网络问题无法访问外部镜像，可为 Docker 添加 HTTP/HTTPS 代理配置（如创建并写入 `/etc/systemd/system/docker.service.d/http-proxy.conf` 后重启服务）或直接改用国内镜像源。
+- **修改数据目录**：若内部空间不够，可修改 Docker 镜像路径至 SD Card。创建 `/mnt/sdcard/docker_data` 目录后，修改 `/lib/systemd/system/docker.service`，在 `ExecStart` 后面添加 `--data-root=/mnt/sdcard/docker_data` 并重启服务。请务必确保 SD Card 已配置开机自动挂载。
 
 ### （3）启动 Server 服务（必做）
 
-- 加载 Server 的 Docker 镜像包：在 Images 目录有2个镜像，一个负责 Server 服务，一个用于ml服务，这里先启动 Server 服务。
+- 加载 Docker 镜像包：`images` 目录包含 Server、Postgres、Redis 以及 ML 镜像。启动 Server 服务前，需先导入 Server、Postgres、Redis 镜像。
 
 ```bash
-#AArch64
-docker load -i images/ax-immich-server-aarch64.tar.gz
-#X86
+#加载server所需镜像
 docker load -i images/ax-immich-server-x86.tar.gz
+docker load -i images/immich-postgres-x86.tar.gz
+docker load -i images/valkey-8-bookworm-x86.tar.gz
 ```
 
-- 并使用 Docker Compose 启动容器服务,会启动`immich_server`、 `immich_postgres`、 `immich_redis` 。若启动时无法访问部分网址，可参考前文**设置 Docker 代理**部分。
+- 并使用 Docker Compose 启动容器服务,会启动`immich_server`、 `immich_postgres`、 `immich_redis` 。
 
 ```bash
-#注意是否cp deploy/example.env deploy/.env
 docker compose -f deploy/docker-compose.yml up -d
 ```
 

@@ -47,7 +47,6 @@ services:
       - /dev/ax_pool:/dev/ax_pool
       - /dev/ax_hrtimer:/dev/ax_hrtimer
       - /dev/ax_os_mem:/dev/ax_os_mem
-      - /dev/ax_mmb_dev:/dev/ax_mmb_dev
       - /dev/ax_proton:/dev/ax_proton
       - /dev/ax_vdsp0:/dev/ax_vdsp0
       - /dev/ax_vdsp1:/dev/ax_vdsp1

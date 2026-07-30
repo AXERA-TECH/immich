@@ -1,3 +1,5 @@
+#!/bin/sh
+
 json_textual=$(cat request_textual.json)
 echo "$json_textual"
 

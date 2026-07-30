@@ -1,9 +1,8 @@
 name: AXERA Bundle
 
 # Bundle policy:
-# - include only AXERA custom server/ML image archives plus minimal deploy files
+# - include AXERA custom server/ML image archives, runtime dependency image archives, and minimal deploy files
 # - do not include model cache or pre-downloaded model assets
-# - do not include postgres/valkey image archives; those are pulled during deployment
 
 on:
   workflow_dispatch:
@@ -63,12 +62,16 @@ jobs:
             deploy_dir: deployment/axera/aarch64
             server_archive: ax-immich-server-aarch64.tar
             ml_archive: ax-immich-ml-aarch64.tar
+            valkey_archive: valkey-8-bookworm-aarch64.tar
+            postgres_archive: immich-postgres-aarch64.tar
           - platform_name: x86
             docker_platform: linux/amd64
             runner: ubuntu-24.04
             deploy_dir: deployment/axera/x86
             server_archive: ax-immich-server-x86.tar
             ml_archive: ax-immich-ml-x86.tar
+            valkey_archive: valkey-8-bookworm-x86.tar
+            postgres_archive: immich-postgres-x86.tar
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Checkout
@@ -125,6 +128,30 @@ jobs:
             --output "type=docker,dest=out/images/${{ matrix.ml_archive }}" \
             machine-learning
           gzip -f "out/images/${{ matrix.ml_archive }}"
+
+      - name: Save runtime dependency image archives
+        run: |
+          set -euxo pipefail
+
+          docker pull --platform "${{ matrix.docker_platform }}" \
+            docker.io/valkey/valkey:8-bookworm@sha256:5b8f8c333bef895c925f56629d6ba90aea95a4f7391f62411e625267c600b19c
+          docker tag \
+            docker.io/valkey/valkey:8-bookworm@sha256:5b8f8c333bef895c925f56629d6ba90aea95a4f7391f62411e625267c600b19c \
+            valkey/valkey:8-bookworm
+          docker save \
+            --output "out/images/${{ matrix.valkey_archive }}" \
+            valkey/valkey:8-bookworm
+          gzip -f "out/images/${{ matrix.valkey_archive }}"
+
+          docker pull --platform "${{ matrix.docker_platform }}" \
+            ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:32324a2f41df5de9efe1af166b7008c3f55646f8d0e00d9550c16c9822366b4a
+          docker tag \
+            ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:32324a2f41df5de9efe1af166b7008c3f55646f8d0e00d9550c16c9822366b4a \
+            ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0
+          docker save \
+            --output "out/images/${{ matrix.postgres_archive }}" \
+            ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0
+          gzip -f "out/images/${{ matrix.postgres_archive }}"
 
       - name: Create platform bundle
         run: |

@@ -1,3 +1,5 @@
+#!/bin/sh
+
 json_visual=$(cat request_visual.json)
 echo "$json_visual"
 

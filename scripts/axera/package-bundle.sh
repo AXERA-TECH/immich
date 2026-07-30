@@ -23,7 +23,7 @@ mkdir -p "${staging_dir}/images" "${staging_dir}/deploy" "${staging_dir}/package
 
 cp -a "${deploy_dir}/." "${staging_dir}/deploy/"
 find "${staging_dir}/deploy" -maxdepth 1 -name '.env' -delete
-cp "${env_file}" "${staging_dir}/deploy/example.env"
+cp "${env_file}" "${staging_dir}/deploy/.env"
 mkdir -p \
   "${staging_dir}/deploy/library" \
   "${staging_dir}/deploy/postgres" \
