@@ -7,7 +7,7 @@ services:
     # Verify every host path below before enabling it; Docker fails to start
     # the container when a configured device path is missing.
     volumes:
-      - ${AXCL_LIB_PATH:-/volume1/@appstore/axclhost/lib}:/opt/axcl/lib:ro
+      - ${AXCL_LIB_PATH:-/usr/lib/axcl}:/opt/axcl/lib:ro
     devices:
       - ${AXCL_DEVICE_AXCL_HOST:-/dev/axcl_host}:/dev/axcl_host
       - ${AXCL_DEVICE_AX_MMB:-/dev/ax_mmb_dev}:/dev/ax_mmb_dev
